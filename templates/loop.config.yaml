@@ -1,0 +1,109 @@
+# ===================================
+# Loop Engineering 設定ファイル
+# ===================================
+# このファイルをプロジェクトルートに配置し、プロジェクトに合わせて編集してください。
+# loop.bash がこのファイルを読み込んで動作します。
+
+# -----------------------------------
+# プロジェクト基本情報
+# -----------------------------------
+project:
+  name: "my-project"
+  description: "プロジェクトの簡単な説明"
+
+# -----------------------------------
+# AIエージェント設定
+# -----------------------------------
+agent:
+  # 使用するCLIツール: gemini | claude | codex | copilot | custom
+  cli: "gemini"
+
+  # カスタムCLI使用時のコマンド（cli: "custom" の場合のみ有効）
+  custom_command: ""
+
+  # プロンプトテンプレートファイルのパス
+  # エージェント起動時に読み込まれる「スタック・プロンプト」
+  prompt_file: "agent_prompt_template.md"
+
+  # エージェントに渡すコンテキストファイル（プロンプト内で参照）
+  context_files:
+    - "@specs/*"
+    - "@fix_plan.md"
+    - "@AGENT.md"
+    - "@SKILL.md"
+
+# -----------------------------------
+# プロジェクトスキル定義
+# -----------------------------------
+# ビルド手順・規約・既知の注意点を記録するファイル
+skills:
+  skill_file: "SKILL.md"
+
+# -----------------------------------
+# バックプレッシャー設定（ビルド＆テスト）
+# -----------------------------------
+# lint → build → test の順に実行されます。
+# 空文字列 "" に設定するとそのステップはスキップされます。
+backpressure:
+  # リントコマンド（コード品質チェック）
+  lint_command: "npm run lint"
+
+  # ビルドコマンド（コンパイル確認）
+  build_command: "npm run build"
+
+  # テストコマンド（メイン検証）
+  test_command: "npm test"
+
+# -----------------------------------
+# プリセット例（使用する言語に応じてコピーしてください）
+# -----------------------------------
+#
+# ■ Rust:
+#   lint_command: "cargo clippy -- -D warnings"
+#   build_command: "cargo build"
+#   test_command: "cargo test"
+#
+# ■ Node.js / TypeScript:
+#   lint_command: "npm run lint"
+#   build_command: "npm run build"
+#   test_command: "npm test"
+#
+# ■ Python:
+#   lint_command: "ruff check ."
+#   build_command: ""
+#   test_command: "pytest"
+#
+# ■ Go:
+#   lint_command: "golangci-lint run"
+#   build_command: "go build ./..."
+#   test_command: "go test ./..."
+
+# -----------------------------------
+# Git設定
+# -----------------------------------
+git:
+  # 自動コミット時のメッセージプレフィックス
+  commit_prefix: "auto: loop"
+
+  # プッシュ先ブランチ
+  branch: "main"
+
+  # 自動タグ付けを有効にするか
+  auto_tag: true
+
+  # タグの初期値（タグが存在しない場合に使用）
+  initial_tag: "0.0.0"
+
+# -----------------------------------
+# ループ制御
+# -----------------------------------
+loop:
+  # ループ間のインターバル（秒）
+  interval: 5
+
+  # 最大ループ回数（0 = 無制限）
+  max_iterations: 0
+
+  # テスト失敗時に自動で git reset --hard するか
+  # false = 人間に確認を求める（推奨）
+  auto_reset_on_failure: false
