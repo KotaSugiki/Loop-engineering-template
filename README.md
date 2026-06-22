@@ -30,6 +30,7 @@ Loop Engineering は、以下のサイクルを自動で繰り返す仕組みで
 | プリミティブ   | 対応ファイル              | 説明                               |
 | :------------- | :------------------------ | :--------------------------------- |
 | **自動化**     | `loop.bash`               | ループの自動実行・検証・Git操作    |
+| **ワークツリー** | `loop.bash` (設定で有効化) | エージェントの作業領域を main から隔離 |
 | **スキル**     | `SKILL.md`                | ビルド手順・規約の永続的な記録     |
 | **状態の記録** | `AGENT.md`, `fix_plan.md` | エージェントの学習記録とタスク進捗 |
 
@@ -324,6 +325,9 @@ chmod +x loop.bash
 | `loop`         | `interval`              | int    | `5`                          | ループ間隔（秒）                                        |
 | `loop`         | `max_iterations`        | int    | `0`                          | 最大ループ回数（0=無制限）                              |
 | `loop`         | `auto_reset_on_failure` | bool   | `false`                      | 失敗時に自動リセットするか                              |
+| `worktree`     | `enabled`               | bool   | `false`                      | ワークツリーの有効/無効                                |
+| `worktree`     | `directory`             | string | `".loop-work"`               | ワークツリーのディレクトリ名                        |
+| `worktree`     | `branch`                | string | `"loop-auto"`                | ワークツリー用ブランチ名                              |
 
 ### 言語別プリセット
 

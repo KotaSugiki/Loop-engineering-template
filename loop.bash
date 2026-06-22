@@ -149,11 +149,19 @@ load_config() {
     LOOP_MAX_ITERATIONS="$(yaml_get "$config_file" "loop.max_iterations" "0")"
     LOOP_AUTO_RESET="$(yaml_get "$config_file" "loop.auto_reset_on_failure" "false")"
 
+    # ワークツリー設定
+    WORKTREE_ENABLED="$(yaml_get "$config_file" "worktree.enabled" "false")"
+    WORKTREE_DIR="$(yaml_get "$config_file" "worktree.directory" ".loop-work")"
+    WORKTREE_BRANCH="$(yaml_get "$config_file" "worktree.branch" "loop-auto")"
+
     log_info "プロジェクト: ${PROJECT_NAME}"
     log_info "エージェントCLI: ${AGENT_CLI}"
     log_info "プロンプトファイル: ${AGENT_PROMPT_FILE}"
     log_info "スキルファイル: ${SKILL_FILE}"
     log_info "テストコマンド: ${TEST_COMMAND:-（なし）}"
+    if [ "$WORKTREE_ENABLED" = "true" ]; then
+        log_info "ワークツリー: 有効 (${WORKTREE_DIR} / ${WORKTREE_BRANCH})"
+    fi
 }
 
 # -----------------------------------------------------------
@@ -282,6 +290,25 @@ handle_success() {
     fi
 
     log_ok "変更をプッシュしました"
+
+    # ワークツリー有効時: 成果をメインブランチにマージ
+    if [ "$WORKTREE_ENABLED" = "true" ]; then
+        log_info "ワークツリーの変更を ${GIT_BRANCH} にマージ中..."
+        local original_dir
+        original_dir="$(pwd)"
+
+        # メインブランチに切り替えてマージ
+        cd "${SCRIPT_DIR}"
+        git merge "$WORKTREE_BRANCH" --no-edit
+        git push origin "$GIT_BRANCH"
+        if [ "$GIT_AUTO_TAG" = "true" ]; then
+            git push origin --tags
+        fi
+
+        # ワークツリーに戻る
+        cd "$original_dir"
+        log_ok "メインブランチへのマージ完了"
+    fi
 }
 
 # -----------------------------------------------------------
@@ -353,6 +380,65 @@ build_agent_prompt() {
 }
 
 # -----------------------------------------------------------
+# ワークツリーのセットアップ
+# -----------------------------------------------------------
+# なぜワークツリーを使うか:
+#   エージェントの変更を main ブランチから隔離することで、
+#   テスト失敗時のリセットが安全になり、人間が main で
+#   並行作業できるようになる。
+setup_worktree() {
+    if [ "$WORKTREE_ENABLED" != "true" ]; then
+        return 0
+    fi
+
+    local worktree_path="${SCRIPT_DIR}/${WORKTREE_DIR}"
+
+    log_info "ワークツリーをセットアップ中: ${worktree_path}"
+
+    # ブランチが存在しなければ作成
+    if ! git rev-parse --verify "$WORKTREE_BRANCH" &>/dev/null; then
+        log_info "ブランチ '${WORKTREE_BRANCH}' を作成"
+        git branch "$WORKTREE_BRANCH"
+    fi
+
+    # 既存のワークツリーがあれば削除して再作成
+    if [ -d "$worktree_path" ]; then
+        log_warn "既存のワークツリーを削除: ${worktree_path}"
+        git worktree remove "$worktree_path" --force 2>/dev/null || true
+    fi
+
+    # ワークツリーを作成
+    git worktree add "$worktree_path" "$WORKTREE_BRANCH"
+    log_ok "ワークツリーを作成: ${worktree_path} (ブランチ: ${WORKTREE_BRANCH})"
+
+    # ワークツリーに移動
+    cd "$worktree_path"
+    log_info "作業ディレクトリ: $(pwd)"
+}
+
+# -----------------------------------------------------------
+# ワークツリーのクリーンアップ
+# -----------------------------------------------------------
+cleanup_worktree() {
+    if [ "$WORKTREE_ENABLED" != "true" ]; then
+        return 0
+    fi
+
+    local worktree_path="${SCRIPT_DIR}/${WORKTREE_DIR}"
+
+    log_info "ワークツリーをクリーンアップ中..."
+
+    # メインディレクトリに戻る
+    cd "$SCRIPT_DIR"
+
+    # ワークツリーを削除
+    if [ -d "$worktree_path" ]; then
+        git worktree remove "$worktree_path" --force 2>/dev/null || true
+        log_ok "ワークツリーを削除: ${worktree_path}"
+    fi
+}
+
+# -----------------------------------------------------------
 # メインループ
 # -----------------------------------------------------------
 main() {
@@ -375,6 +461,14 @@ main() {
         log_info "YAML パーサー: yq を使用"
     else
         log_warn "yq が見つかりません。簡易パーサーを使用します（yq のインストールを推奨）"
+    fi
+
+    # ワークツリーのセットアップ（有効な場合のみ）
+    setup_worktree
+
+    # Ctrl+C 時にワークツリーをクリーンアップするトラップ設定
+    if [ "$WORKTREE_ENABLED" = "true" ]; then
+        trap 'log_warn "中断を検出。ワークツリーをクリーンアップ中..."; cleanup_worktree; exit 130' INT TERM
     fi
 
     # エージェントプロンプトの構築
@@ -419,6 +513,9 @@ main() {
         log_info "${LOOP_INTERVAL}秒待機中..."
         sleep "$LOOP_INTERVAL"
     done
+
+    # ワークツリーのクリーンアップ
+    cleanup_worktree
 
     log_info "============================================"
     log_info "Loop Engineering を終了しました"
