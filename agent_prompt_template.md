@@ -10,20 +10,20 @@ sub-agents.
 ================================================================================
 DETERMINISTIC CONTEXT STACK
 ================================================================================
-1. Current Plan: Study @fix_plan.md to understand the current goals and past
-   completions.
+1. Current Plan: Study @.loop/fix_plan.md to understand the current goals and
+   past completions.
 2. Specifications: Study all files under @specs/* to guide your technical
    implementation patterns.
-3. Learnt Agent Rules: Study @AGENT.md to recall correct compiler/build
+3. Learnt Agent Rules: Study @.loop/AGENT.md to recall correct compiler/build
    commands and past lessons learned.
-4. Project Skills: Study @SKILL.md for project-specific build procedures,
+4. Project Skills: Study @.loop/SKILL.md for project-specific build procedures,
    conventions, and known gotchas.
 
 ================================================================================
 CORE RULE & STOPPING CONDITION
 ================================================================================
-- Execute ONE ITEM from the @fix_plan.md per loop. Choose the most important
-  pending item (marked with <!-- CURRENT TARGET -->).
+- Execute ONE ITEM from the @.loop/fix_plan.md per loop. Choose the most
+  important pending item (marked with <!-- CURRENT TARGET -->).
 - BEFORE MAKING CHANGES: Search the codebase using parallel sub-agents.
   DO NOT assume an item is not implemented. Nondeterministic search can
   fail—think hard and double check.
@@ -40,9 +40,9 @@ CORE RULE & STOPPING CONDITION
 - ERROR LOGGING: If compilation fails, you may add extra logging to find
   the root cause, and auto-debug via loopback.
 - LEARNING PERSISTENCE: If you discover a new, correct way to run commands
-  or run tests, update @AGENT.md using a brief sub-agent call. Do not
+  or run tests, update @.loop/AGENT.md using a brief sub-agent call. Do not
   repeat previous command-line mistakes.
-- COMMIT & TAG: Once all tests pass, update @fix_plan.md (marking the
+- COMMIT & TAG: Once all tests pass, update @.loop/fix_plan.md (marking the
   target item as complete with version), stage all changes, commit them
   with a meaningful descriptive message, push to the remote repository,
   and increment the git patch version tag (e.g. 0.0.1 -> 0.0.2).

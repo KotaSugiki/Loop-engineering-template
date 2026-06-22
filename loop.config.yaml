@@ -26,11 +26,12 @@ agent:
   prompt_file: "agent_prompt_template.md"
 
   # エージェントに渡すコンテキストファイル（プロンプト内で参照）
+  # specs/ はプロジェクトルート、それ以外は .loop/ 配下に配置
   context_files:
     - "@specs/*"
-    - "@fix_plan.md"
-    - "@AGENT.md"
-    - "@SKILL.md"
+    - "@.loop/fix_plan.md"
+    - "@.loop/AGENT.md"
+    - "@.loop/SKILL.md"
 
 # -----------------------------------
 # プロジェクトスキル定義
